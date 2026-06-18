@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Assessment - spring-music</title>
+<style>
+:root {
+  --bg-primary: #ffffff;
+  --bg-card: #f8f9fa;
+  --bg-page: #f0f1f3;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-muted: #6b7280;
+  --border-color: #d0d7de;
+  --border-light: #e1e4e8;
+  --link-color: #2563eb;
+  --color-mandatory: #E3008C;
+  --color-potential: #637CEF;
+  --color-optional: #A19F9D;
+  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-mono: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); font-size: 13px; color: var(--text-primary); background: var(--bg-primary); line-height: 1.5; margin: 0; padding: 0; }
+a { color: var(--link-color); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Page layout ───────────────────────────────────────────── */
+.main { margin: 0; padding: 24px 32px; background: var(--bg-primary); }
+.back-link { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; display: block; }
+h1 { font-weight: 600; font-size: 20px; color: var(--text-primary); margin-bottom: 20px; }
+
+/* ── Report cards (matches VS Code .vscode-report-card) ──── */
+.report-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 4px; padding: 12px; margin-bottom: 20px; }
+.report-card h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-primary); }
+.report-card-body { margin-top: 16px; }
+
+/* ── Component Information (two-column) ────────────────── */
+.app-info-container { display: flex; gap: 8px; flex-wrap: wrap; }
+.app-info-column { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.app-info-row { display: flex; align-items: baseline; }
+.app-info-label { width: 136px; flex-shrink: 0; font-weight: 600; color: var(--text-primary); }
+.app-info-value { flex: 1; color: var(--text-primary); }
+
+/* ── Issue Summary (pie charts + legend) ─────────────────── */
+.cards-container { display: flex; align-items: stretch; gap: 20px; flex-wrap: wrap; }
+.issue-summary-card { flex: 2; }
+.domain-summary-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-around; }
+.domain-summary-item { flex: 1; min-width: 120px; text-align: center; padding: 0 16px; border-right: 1px solid var(--border-light); }
+.domain-summary-item:last-child { border-right: none; }
+.domain-summary-item h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 8px; }
+.domain-summary-item .count { font-size: 12px; color: var(--text-secondary); }
+.criticality-legend { display: flex; flex-wrap: wrap; gap: 15px; padding-top: 12px; justify-content: center; }
+.criticality-legend .legend-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.legend-swatch { display: inline-block; width: 1em; height: 1em; border-radius: 2px; }
+
+/* ── Issue list tables ───────────────────────────────────── */
+.issue-section { margin-top: 20px; }
+.issue-section h2 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.issue-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 600px; }
+.issue-table th { text-align: left; text-transform: uppercase; font-weight: 600; font-size: calc(13px * 0.875); padding: 6px 8px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); color: var(--text-secondary); position: sticky; top: 0; z-index: 1; }
+.issue-table td { padding: 12px 8px; border-bottom: 1px solid var(--border-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.col-issue { width: 55%; }
+.col-criticality { width: 25%; }
+.col-storypoint { width: 20%; }
+
+/* ── Target dropdown ─────────────────────────────────────── */
+.target-select-container { margin: 4px 0 16px 0; display: flex; align-items: center; gap: 8px; }
+.target-select-container label { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.target-select-container select { font-family: var(--font-family); font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
+
+/* ── Filter bar ──────────────────────────────────────────── */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 8px 0; align-items: center; }
+.multi-select { position: relative; display: inline-block; min-width: 140px; }
+.multi-select-btn { font-family: var(--font-family); font-size: 13px; padding: 4px 24px 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; width: 100%; text-align: left; position: relative; white-space: nowrap; }
+.multi-select-btn::after { content: '\25BE'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-secondary); }
+.multi-select-dropdown { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; margin-top: 2px; }
+.multi-select.open .multi-select-dropdown { display: block; }
+.multi-select-option { display: flex; align-items: center; gap: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.multi-select-option:hover { background: var(--bg-secondary); }
+.multi-select-option input[type=checkbox] { margin: 0; cursor: pointer; }
+.clear-filters { font-size: 12px; color: var(--link-color); cursor: pointer; margin-left: 4px; }
+
+/* ── Criticality labels (colored square + text) ──────────── */
+.crit-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.crit-square { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.crit-square-mandatory { background: var(--color-mandatory); }
+.crit-square-potential { background: var(--color-potential); }
+.crit-square-optional { background: var(--color-optional); }
+
+/* ── Expandable rows ─────────────────────────────────────── */
+.expand-btn { background: none; border: none; cursor: pointer; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 11px; transition: transform 0.15s; padding: 0; vertical-align: middle; flex-shrink: 0; }
+.expand-btn.open { transform: rotate(90deg); }
+.issue-title-cell { display: flex; align-items: center; gap: 4px; }
+.detail-row td { padding: 0; border-bottom: 1px solid var(--border-light); white-space: normal; overflow: visible; text-overflow: clip; }
+.detail-content { display: flex; gap: 0; padding: 8px 8px 8px 32px; min-width: 0; }
+.file-list { flex: 0 0 50%; min-width: 0; overflow: hidden; }
+.file-list table { width: 100%; border-collapse: collapse; }
+.file-list th { font-size: calc(13px * 0.875); text-transform: uppercase; font-weight: 600; color: var(--text-secondary); padding: 6px 8px; border-bottom: 1px solid var(--border-color); text-align: left; height: 32px; }
+.file-list td { font-size: 13px; padding: 6px 8px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+.file-list .file-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; display: block; }
+.file-list .position { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.explanation-panel { flex: 1; padding-left: 16px; min-width: 0; overflow-wrap: break-word; word-wrap: break-word; }
+.explanation-panel h4 { font-size: calc(13px * 0.875); text-transform: uppercase; font-weight: 600; color: var(--text-secondary); padding: 6px 0; border-bottom: 1px solid var(--border-color); height: 32px; margin: 0; }
+.explanation-panel p { font-size: 13px; padding: 8px 0; color: var(--text-primary); line-height: 1.6; white-space: normal; word-break: break-word; }
+
+/* ── Experimental badge ──────────────────────────────────── */
+.badge-experimental { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: #fef9c3; color: #854d0e; vertical-align: middle; margin-left: 8px; cursor: default; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.footer { text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 13px; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .main { padding: 16px; }
+  .app-info-container { flex-direction: column; }
+  .domain-summary-container { flex-direction: column; }
+  .domain-summary-item { border-right: none; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; }
+  .detail-content { flex-direction: column; }
+  .file-list { flex: none; width: 100%; }
+  .explanation-panel { padding-left: 0; padding-top: 8px; }
+}
+/* ── Tab navigation ──────────────────────────────────────── */
+.tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border-color); margin-bottom: 28px; flex-wrap: wrap; }
+.tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 18px; font-size: 13px; font-family: var(--font-family); color: var(--text-secondary); cursor: pointer; margin-bottom: -1px; white-space: nowrap; position: relative; }
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--link-color); border-bottom-color: var(--link-color); font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Tooltip on tab ──────────────────────────────────────── */
+.tab-btn[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #24292f; color: #ffffff; font-size: 12px; font-weight: 400; padding: 6px 10px; border-radius: 4px; white-space: normal; width: max-content; max-width: 260px; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; }
+.tab-btn[data-tooltip]:hover::after { opacity: 1; }
+
+/* ── Fact content — prose column ─────────────────────────── */
+.fact-content { max-width: 860px; margin: 0 auto; line-height: 1.75; color: var(--text-primary); font-size: 14px; }
+.fact-content h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary); letter-spacing: -0.01em; }
+.fact-content h1 + p { margin-top: 6px; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+.fact-content h2 { font-size: 17px; font-weight: 700; margin: 36px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); letter-spacing: -0.01em; }
+.fact-content h3 { font-size: 14px; font-weight: 700; margin: 24px 0 8px 0; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; color: var(--text-secondary); }
+.fact-content p { margin: 10px 0; color: var(--text-primary); }
+.fact-content ul, .fact-content ol { margin: 10px 0 10px 22px; }
+.fact-content li { margin: 5px 0; }
+.fact-content a { color: var(--link-color); }
+.fact-content a:hover { text-decoration: underline; }
+
+/* ── Fact tables ─────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+.fact-content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 13px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
+.fact-content thead { background: var(--bg-card); }
+.fact-content th { text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 14px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+.fact-content td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); vertical-align: top; color: var(--text-primary); }
+.fact-content tr:last-child td { border-bottom: none; }
+.fact-content tbody tr:hover { background: #f6f8fa; }
+
+/* ── Fact code ───────────────────────────────────────────── */
+.fact-content code { font-family: var(--font-mono); font-size: 12px; background: #f0f1f3; padding: 2px 6px; border-radius: 4px; color: #c7254e; }
+.fact-content pre { background: #f6f8fa; border: 1px solid var(--border-light); border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 14px 0; }
+.fact-content pre code { background: none; color: var(--text-primary); padding: 0; border-radius: 0; }
+.fact-content hr { border: none; border-top: 1px solid var(--border-light); margin: 28px 0; }
+.fact-content strong { font-weight: 600; }
+.fact-content em { font-style: italic; }
+.fact-content blockquote { border-left: 3px solid var(--border-color); margin: 12px 0; padding: 4px 16px; color: var(--text-secondary); }
+.fact-unavailable { padding: 32px 0; }
+.fact-unavailable h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); text-transform: none; letter-spacing: 0; margin: 0 0 12px 0; }
+.fact-unavailable p { margin: 0 0 8px 0; color: var(--text-secondary); }
+.fact-unavailable ol, .fact-unavailable ul { margin: 0 0 0 22px; color: var(--text-primary); }
+.fact-unavailable li { margin: 6px 0; }
+
+/* ── Mermaid diagram card ─────────────────────────────────── */
+.mermaid { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; padding: 24px 16px; margin: 20px 0; overflow-x: auto; text-align: center; cursor: pointer; position: relative; }
+.mermaid:hover { border-color: var(--border-color); }
+.mermaid svg { max-width: 100%; height: auto !important; display: inline-block; }
+.mermaid-zoom-hint { position: absolute; top: 8px; right: 10px; font-size: 11px; color: var(--text-muted); opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+.mermaid:hover .mermaid-zoom-hint { opacity: 1; }
+
+/* ── Diagram lightbox ────────────────────────────────────── */
+.diagram-lightbox { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); align-items: center; justify-content: center; cursor: zoom-out; padding: 48px 32px; }
+.diagram-lightbox.open { display: flex; }
+.diagram-lightbox-inner { background: #ffffff; border-radius: 10px; padding: 32px; width: 88vw; max-height: 88vh; overflow: hidden; cursor: default; box-shadow: 0 24px 64px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; }
+.diagram-lightbox-inner svg { width: 100% !important; height: auto !important; max-height: 76vh; display: block; }
+.diagram-lightbox-close { position: fixed; top: 20px; right: 24px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 1001; }
+.diagram-lightbox-close:hover { background: var(--bg-card); }
+.diagram-lightbox-hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.55); color: #ffffff; font-size: 12px; padding: 6px 14px; border-radius: 20px; pointer-events: none; white-space: nowrap; z-index: 1001; }
+</style>
+<script>
+window.__mermaidPending = [];
+window.__mermaidReady = false;
+window.__renderMermaidIn = function(container) {
+  if (container) { window.__mermaidPending.push(container); }
+};
+</script>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: false, theme: 'default', flowchart: { useMaxWidth: true }, sequence: { useMaxWidth: true } });
+
+window.__renderMermaidIn = function(container) {
+  var nodes = container ? container.querySelectorAll('.mermaid:not([data-processed])') : [];
+  if (nodes.length > 0) {
+    mermaid.run({ nodes: Array.from(nodes) }).then(function() {
+      nodes.forEach(function(node) {
+        if (!node.querySelector('.mermaid-zoom-hint')) {
+          var hint = document.createElement('span');
+          hint.className = 'mermaid-zoom-hint';
+          hint.textContent = 'Click to expand';
+          node.appendChild(hint);
+        }
+      });
+    });
+  }
+};
+
+var drained = new Set();
+(window.__mermaidPending || []).forEach(function(c) {
+  if (!drained.has(c)) { drained.add(c); window.__renderMermaidIn(c); }
+});
+window.__mermaidPending = [];
+window.__mermaidReady = true;
+
+function renderActivePanels() {
+  document.querySelectorAll('.tab-panel.active').forEach(function(p) {
+    if (!drained.has(p)) { drained.add(p); window.__renderMermaidIn(p); }
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderActivePanels);
+} else {
+  renderActivePanels();
+}
+</script>
+</head><body>
+<div id="diagram-lightbox" class="diagram-lightbox" role="dialog" aria-modal="true">
+  <button class="diagram-lightbox-close" id="diagram-lightbox-close" aria-label="Close">&#x2715;</button>
+  <div class="diagram-lightbox-hint">Scroll to zoom &nbsp;&middot;&nbsp; Drag to pan &nbsp;&middot;&nbsp; Double-click to reset</div>
+  <div class="diagram-lightbox-inner" id="diagram-lightbox-inner"></div>
+</div>
+<div class="main">
+<h1>spring-music</h1>
+<div class="report-card">
+  <h2>Component Information</h2>
+  <div class="report-card-body">
+    <div class="app-info-container">
+      <div class="app-info-column">
+        <div class="app-info-row"><span class="app-info-label">Component Name</span><span class="app-info-value">spring-music</span></div>
+        <div class="app-info-row"><span class="app-info-label">Java Version</span><span class="app-info-value">17</span></div>
+        <div class="app-info-row"><span class="app-info-label">Effort</span><span class="app-info-value" id="effort-display">M (total story points: 43)</span></div>
+      </div>
+      <div class="app-info-column">
+        <div class="app-info-row"><span class="app-info-label">Build Tools</span><span class="app-info-value">Gradle</span></div>
+        <div class="app-info-row"><span class="app-info-label">Frameworks</span><span class="app-info-value">Spring Boot, Spring</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="tab-issues" data-tooltip="Issues detected in the source code">Issues</button>
+  <button class="tab-btn" data-tab="tab-arch" data-tooltip="How the app&#x27;s layers connect — from UI to data.">Architecture</button>
+  <button class="tab-btn" data-tab="tab-api" data-tooltip="Endpoints exposed by this app and how services communicate.">API Contracts</button>
+  <button class="tab-btn" data-tab="tab-config" data-tooltip="Environment settings, runtime profiles, and deployment manifests.">Configuration</button>
+  <button class="tab-btn" data-tab="tab-workflows" data-tooltip="Domain entities and the core flows users move through.">Business Workflows</button>
+  <button class="tab-btn" data-tab="tab-deps" data-tooltip="Libraries and frameworks this app depends on, grouped by category.">Dependencies</button>
+  <button class="tab-btn" data-tab="tab-data" data-tooltip="Database schema, entity relationships, and persistence behavior.">Data Model</button>
+</nav>
+<div id="tab-issues" class="tab-panel active">
+<div class="target-select-container">
+  <label for="target-select">Target Compute Service:</label>
+  <select id="target-select" onchange="onTargetChange(this.value)">
+    <option value="azure-aks">Azure Kubernetes Service</option>
+  </select>
+</div>
+<div class="report-card">
+  <h2>Issue Summary</h2>
+  <div class="report-card-body">
+    <div class="domain-summary-container" id="donut-container">
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-mandatory)" stroke-width="15" stroke-dasharray="42.48 219.91" stroke-dashoffset="-0.00"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-potential)" stroke-width="15" stroke-dasharray="130.45 219.91" stroke-dashoffset="-43.98"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-optional)" stroke-width="15" stroke-dasharray="42.48 219.91" stroke-dashoffset="-175.93"/>
+</svg>
+
+        <h3>Cloud Readiness</h3>
+        <div class="count">5 issues</div>
+      </div>
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-mandatory)" stroke-width="15" stroke-dasharray="145.11 219.91" stroke-dashoffset="-0.00"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-optional)" stroke-width="15" stroke-dasharray="71.80 219.91" stroke-dashoffset="-146.61"/>
+</svg>
+
+        <h3>Java Upgrade</h3>
+        <div class="count">3 issues</div>
+      </div>
+    </div>
+    <div class="criticality-legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-mandatory)"></span>Mandatory</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-potential)"></span>Potential</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-optional)"></span>Optional</div>
+    </div>
+  </div>
+</div>
+<div class="filter-bar" id="filter-bar">
+  <div class="multi-select" id="domain-ms">
+    <button class="multi-select-btn" onclick="toggleMultiSelect('domain-ms')">Domain</button>
+    <div class="multi-select-dropdown">
+      <label class="multi-select-option"><input type="checkbox" value="cloud-readiness" onchange="onMultiSelectChange('domain-ms','Domain')"/> Cloud Readiness</label>
+      <label class="multi-select-option"><input type="checkbox" value="java-upgrade" onchange="onMultiSelectChange('domain-ms','Domain')"/> Java Upgrade</label>
+    </div>
+  </div>
+  <div class="multi-select" id="criticality-ms">
+    <button class="multi-select-btn" onclick="toggleMultiSelect('criticality-ms')">Criticality</button>
+    <div class="multi-select-dropdown">
+      <label class="multi-select-option"><input type="checkbox" value="mandatory" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Mandatory</label>
+      <label class="multi-select-option"><input type="checkbox" value="potential" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Potential</label>
+      <label class="multi-select-option"><input type="checkbox" value="optional" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Optional</label>
+    </div>
+  </div>
+  <a class="clear-filters" href="javascript:void(0)" onclick="clearAllFilters()">Clear all</a>
+</div>
+<div class="issue-section" data-domain="cloud-readiness">
+  <h2>Cloud Readiness</h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="3" data-default-severity="mandatory" data-rule="dockerfile-00000" onclick="toggleRow('row-cloudreadiness-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-0">&#x276F;</button> No Dockerfile found</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>No Dockerfile was found in the project. This suggests the application may not yet be containerized. <br/>Consider creating a Dockerfile to enable container-based replatforming to Azure services such as Azure Container Apps or AKS.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="5" data-default-severity="potential" data-rule="azure-database-mysql-01000" onclick="toggleRow('row-cloudreadiness-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-1">&#x276F;</button> MySQL database found</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 38</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application.yml">src/main/resources/application.yml</span></td><td><span class="position">Line 30</span></td></tr>
+            <tr><td><span class="file-path" title="build/resources/main/application.yml">build/resources/main/application.yml</span></td><td><span class="position">Line 30</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>To migrate a Java application that uses a MySQL database to Azure, you can follow these recommendations:</p><p> * Use a managed <strong>Azure Database for MySQL</strong>: For that create a managed MySQL database in Azure and choose the appropriate pricing tier based on your application&#x27;s requirements for performance, storage, and availability.</p><p> * <strong>Migrate</strong> the existing MySQL database: For that you can use the Azure Database Migration Service (DMS) to perform an online migration with minimal downtime.</p><p> * Update the application&#x27;s <strong>database connection</strong> details: Modify the Java application&#x27;s configuration to point to the newly provisioned Azure Database for MySQL. Update the connection string, hostname, port, username, and password information accordingly.</p><p> * Enable <strong>monitoring and diagnostics</strong>: Utilize Azure Monitor to gain insights into the performance and health of your Java application and the underlying MySQL database. Set up metrics, alerts, and log analytics to proactively identify and resolve issues.</p><p> * Implement <strong>security</strong> measures: Apply security best practices to protect your Java application and the MySQL database. This includes implementing authentication and authorization mechanisms with passwordless connections and leveraging Microsoft Defender for Cloud for threat detection and vulnerability assessments.</p><p> * <strong>Backup</strong> your data: Azure Database for MySQL provides automated backups by default. You can configure the retention period for backups based on your requirements. You can also enable geo-redundant backups, if needed, to enhance data durability and availability.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="5" data-default-severity="potential" data-rule="azure-database-postgresql-02000" onclick="toggleRow('row-cloudreadiness-2', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-2">&#x276F;</button> PostgreSQL database found</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-2" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 39</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application.yml">src/main/resources/application.yml</span></td><td><span class="position">Line 45</span></td></tr>
+            <tr><td><span class="file-path" title="build/resources/main/application.yml">build/resources/main/application.yml</span></td><td><span class="position">Line 45</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>To migrate a Java application that uses a PostgreSQL database to Azure, you can follow these recommendations:</p><p> * Use a managed <strong>Azure Database for PostgreSQL Flexible Server</strong>: For that create a managed PostgreSQL Flexible Server database in Azure and choose the appropriate pricing tier based on your application&#x27;s requirements for performance, storage, and availability.</p><p> * <strong>Migrate</strong> the existing PostgreSQL database: For that you can use the Azure Database Migration Service (DMS) to perform an online migration with minimal downtime.</p><p> * Update the application&#x27;s <strong>database connection</strong> details: Modify the Java application&#x27;s configuration to point to the newly provisioned Azure Database for PostgreSQL. Update the connection string, hostname, port, username, and password information accordingly.</p><p> * Enable <strong>monitoring and diagnostics</strong>: Utilize Azure Monitor to gain insights into the performance and health of your Java application and the underlying PostgreSQL database. Set up metrics, alerts, and log analytics to proactively identify and resolve issues.</p><p> * Implement <strong>security</strong> measures: Apply security best practices to protect your Java application and the PostgreSQL database. This includes implementing authentication and authorization mechanisms with passwordless connections and leveraging Microsoft Defender for Cloud for threat detection and vulnerability assessments.</p><p> * <strong>Backup</strong> your data: Azure Database for PostgreSQL provides automated backups by default. You can configure the retention period for backups based on your requirements. You can also enable geo-redundant backups, if needed, to enhance data durability and availability.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="3" data-default-severity="potential" data-rule="azure-password-01000" onclick="toggleRow('row-cloudreadiness-3', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-3">&#x276F;</button> Password found in configuration file</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-3" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/resources/application.yml">src/main/resources/application.yml</span></td><td><span class="position">Line 33</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application.yml">src/main/resources/application.yml</span></td><td><span class="position">Line 48</span></td></tr>
+            <tr><td><span class="file-path" title="build/resources/main/application.yml">build/resources/main/application.yml</span></td><td><span class="position">Line 33</span></td></tr>
+            <tr><td><span class="file-path" title="build/resources/main/application.yml">build/resources/main/application.yml</span></td><td><span class="position">Line 48</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>Using clear passwords in property files is a security risk, as they can be easily compromised if the files are accessed by unauthorized individuals. To enhance the security of your application, it is recommended to employ secure credential management practices.</p><p> * <strong>Azure Key Vault</strong>: Utilize Azure Key Vault to securely store and manage your application&#x27;s passwords and other sensitive credentials. Azure Key Vault provides a centralized and highly secure location for storing secrets, keys, and certificates.</p><p> * <strong>Passwordless connections</strong>: You can provide an additional layer of security and convenience for accessing resources in Azure by eliminating the need for passwords. This way you can reduce the risk of password-related vulnerabilities, such as weak passwords or password theft.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="optional" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;optional&quot;}}' data-default-effort="3" data-default-severity="optional" data-rule="localhost-00004" onclick="toggleRow('row-cloudreadiness-4', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-4">&#x276F;</button> Localhost Usage</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-optional"></span>Optional</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-4" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build/test-results/test/TEST-org.cloudfoundry.samples.music.ApplicationTests.xml">build/test-results/test/TEST-org.cloudfoundry.samples.music.ApplicationTests.xml</span></td><td><span class="position">Line 40</span></td></tr>
+            <tr><td><span class="file-path" title="build/test-results/test/TEST-org.cloudfoundry.samples.music.ApplicationTests.xml">build/test-results/test/TEST-org.cloudfoundry.samples.music.ApplicationTests.xml</span></td><td><span class="position">Line 60</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The app is trying to use localhost, please try to migrate the resource to cloud</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<div class="issue-section" data-domain="java-upgrade">
+  <h2>Java Upgrade</h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="8" data-default-severity="mandatory" data-rule="spring-boot-to-azure-spring-boot-version-01000" onclick="toggleRow('row-javaupgrade-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-0">&#x276F;</button> Spring Boot Version Has Reached the End of OSS Support</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 27</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 25</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 26</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 28</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 30</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 29</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 33</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 58</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The application is using a Spring Boot version that has reached its End of OSS Support.<br/>With the officially supported new versions from Spring, you can get the best experience. Here are some steps you can take to update your application to the latest version of Spring Boot:</p><ul><li>Choose a <strong>supported Spring Boot version</strong>: Check out Spring Boot Support Versions and determine the most suitable supported Spring Boot version.</li></ul><ul><li><strong>Update Spring Boot version</strong>: Update the Spring Boot version of your application. There are automated tools like Rewrite to help you with the migration.</li></ul><ul><li><strong>Address code compatibility</strong>: Review your application&#x27;s codebase for any potential compatibility issues with the target Spring Boot version. Update deprecated APIs or features, address any language or library changes, and ensure that your code follows best practices and standards.</li></ul><ul><li><strong>Test thoroughly</strong>: Execute a comprehensive testing process to verify the compatibility and functionality of your application with the new Spring Boot version. Perform unit tests, integration tests, and system tests to validate that all components and dependencies work as expected.</li></ul></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="8" data-default-severity="mandatory" data-rule="spring-framework-version-01000" onclick="toggleRow('row-javaupgrade-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-1">&#x276F;</button> Spring Framework Version Has Reached the End of OSS Support</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 27</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 58</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 25</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>Your application is using a Spring Framework version that has reached its End of OSS Support.<br/>Upgrading to a supported version ensures better performance, security, and compatibility with modern tools.<br/>  1. Pick a Supported Version: Review the Spring Framework support policy and choose an actively supported version.<br/>  2. Update Your Project: Change the Spring Framework version in your pom.xml or build.gradle.<br/>  3. Fix Compatibility Issues: Update deprecated code, replace removed features, and ensure dependencies are compatible with the new Spring Framework version.<br/>  4. Thoroughly Test: Run unit, integration, and end-to-end tests to make sure everything still works after the upgrade.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="optional" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;optional&quot;}}' data-default-effort="8" data-default-severity="optional" data-rule="azure-java-version-02000" onclick="toggleRow('row-javaupgrade-2', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-2">&#x276F;</button> Java Version is not the latest LTS</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-optional"></span>Optional</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-2" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 12</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 62</span></td></tr>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 63</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The application is not using the latest LTS Java version. It is recommended to consider upgrading to the latest LTS version to take advantage of the newest language features, performance improvements, and extended support timelines.<br/>Upgrading to the latest LTS version ensures your application benefits from the most recent security enhancements and a longer support lifecycle.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+</div><!-- #tab-issues -->
+<div id="tab-arch" class="tab-panel">
+  <div class="fact-content"><h1 id="architecture-diagram">Architecture Diagram</h1>
+<p>Spring Music is a single deployable Spring Boot application that serves an AngularJS user interface and a small JSON REST API for album management. It selects one persistence implementation at startup based on active Spring profiles or detected Cloud Foundry service bindings.</p>
+<h2 id="application-architecture">Application Architecture</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph Client["Client Layer"]
+        Browser["Web Browser"]
+        SPA["AngularJS SPA + Bootstrap"]
+    end
+    subgraph App["Application Layer - Spring Boot 3.1.5"]
+        Static["Static asset delivery"]
+        AlbumsApi["AlbumController"]
+        InfoApi["InfoController"]
+        ErrorApi["ErrorController"]
+        Init["SpringApplicationContextInitializer"]
+        Seed["AlbumRepositoryPopulator"]
+    end
+    subgraph Data["Data Layer"]
+        Repo["CrudRepository Album"]
+        Jpa["JPA repository"]
+        Mongo["Mongo repository"]
+        RedisRepo["Redis repository"]
+        Sql[("H2 or SQL database")]
+        MongoDb[("MongoDB")]
+        Redis[("Redis")]
+        SeedFile[("albums.json seed data")]
+    end
+    subgraph External["External Services"]
+        Cf["Cloud Foundry service bindings"]
+        Actuator["Actuator endpoints"]
+    end
+
+    Browser -->|"loads static assets"| Static
+    Static -->|"boots"| SPA
+    SPA -->|"JSON over HTTP"| AlbumsApi
+    SPA -->|"runtime metadata"| InfoApi
+    SPA -->|"test failure paths"| ErrorApi
+    Init -->|"discovers bound services"| Cf
+    Init -->|"selects active repository"| Repo
+    Seed -->|"reads"| SeedFile
+    Seed -->|"initial load when empty"| Repo
+    AlbumsApi -->|"CRUD operations"| Repo
+    Repo -->|"default profile"| Jpa
+    Repo -->|"mongodb profile"| Mongo
+    Repo -->|"redis profile"| RedisRepo
+    Jpa -->|"SQL persistence"| Sql
+    Mongo -->|"document persistence"| MongoDb
+    RedisRepo -->|"hash storage"| Redis
+    Actuator -->|"management data"| InfoApi
+</div>
+<h3 id="technology-stack-summary">Technology Stack Summary</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Layer</th><th>Technology</th><th>Version</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td>Presentation</td><td>AngularJS, Bootstrap, jQuery via WebJars</td><td>1.2.16, 3.1.1, 2.1.0-2</td><td>Browser UI for browsing and editing albums</td></tr>
+<tr><td>Application</td><td>Spring Boot</td><td>3.1.5</td><td>Hosts REST controllers, auto-configuration, and actuator support</td></tr>
+<tr><td>Persistence</td><td>Spring Data JPA, Spring Data MongoDB, Spring Data Redis</td><td>Managed by Spring Boot 3.1.5</td><td>Profile-driven selection of relational, document, or key-value persistence</td></tr>
+<tr><td>Platform Integration</td><td>Java CFEnv</td><td>3.1.2</td><td>Detects Cloud Foundry bound services and activates the matching profile</td></tr>
+<tr><td>Runtime</td><td>Java</td><td>17</td><td>Compiles and runs the application jar</td></tr>
+</tbody></table></div>
+<h3 id="data-storage-external-services">Data Storage & External Services</h3>
+<p>The application stores a single <code>Album</code> domain model, but it can map that model to different backing stores depending on environment: an in-memory relational database by default, SQL databases for the <code>mysql</code> and <code>postgres</code> profiles, MongoDB for the <code>mongodb</code> profile, and Redis hashes for the <code>redis</code> profile. At runtime it also consults Cloud Foundry service bindings to discover which profile to activate, while Actuator exposes management endpoints for health and diagnostics.</p>
+<h3 id="key-architectural-decisions">Key Architectural Decisions</h3>
+<ul>
+<li>Uses Spring profiles plus a custom application context initializer to switch between persistence technologies without changing controller code.</li>
+<li>Keeps the UI and API in the same deployable unit by serving static AngularJS assets from the Spring Boot application.</li>
+<li>Seeds the repository from <code>albums.json</code> on startup when the selected store is empty, ensuring demo data is available in each environment.</li>
+</ul>
+<h2 id="component-relationships">Component Relationships</h2>
+<div class="mermaid">
+flowchart LR
+    subgraph Presentation
+        Index["index.html"]
+        AlbumsJs["AlbumsController JS"]
+        InfoJs["InfoController JS"]
+        ErrorsJs["ErrorsController JS"]
+    end
+    subgraph Business["Business Logic"]
+        AlbumCtrl["AlbumController"]
+        InfoCtrl["InfoController"]
+        ErrorCtrl["ErrorController"]
+        Initializer["SpringApplicationContextInitializer"]
+        Populator["AlbumRepositoryPopulator"]
+    end
+    subgraph DataAccess["Data Access"]
+        CrudRepo["CrudRepository Album"]
+        JpaRepo["JpaAlbumRepository"]
+        MongoRepo["MongoAlbumRepository"]
+        RedisRepo2["RedisAlbumRepository"]
+        AlbumEntity["Album"]
+    end
+    subgraph Infra["Infrastructure"]
+        RedisCfg["RedisConfig"]
+        CfEnv["CfEnv"]
+        RandomId["RandomIdGenerator"]
+    end
+
+    Index -->|"routes views"| AlbumsJs
+    Index -->|"loads metadata"| InfoJs
+    Index -->|"invokes failure tests"| ErrorsJs
+    AlbumsJs -->|"calls /albums"| AlbumCtrl
+    InfoJs -->|"calls /appinfo"| InfoCtrl
+    ErrorsJs -->|"calls /errors"| ErrorCtrl
+    AlbumCtrl -->|"delegates CRUD"| CrudRepo
+    CrudRepo -->|"default profile"| JpaRepo
+    CrudRepo -->|"mongodb profile"| MongoRepo
+    CrudRepo -->|"redis profile"| RedisRepo2
+    JpaRepo -->|"persists"| AlbumEntity
+    MongoRepo -->|"persists"| AlbumEntity
+    RedisRepo2 -->|"serializes"| AlbumEntity
+    RedisRepo2 -->|"generates ids"| RandomId
+    RedisCfg -.->|"configures template"| RedisRepo2
+    Initializer -.->|"discovers services"| CfEnv
+    Initializer -.->|"enables profiles"| CrudRepo
+    Populator -->|"loads seed data"| CrudRepo
+</div>
+<h3 id="component-inventory">Component Inventory</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Component</th><th>Layer</th><th>Type</th><th>Responsibility</th>
+</tr></thead><tbody>
+<tr><td><code>index.html</code> and AngularJS modules</td><td>Presentation</td><td>SPA shell</td><td>Loads templates and calls backend JSON endpoints</td></tr>
+<tr><td><code>AlbumController</code></td><td>Presentation</td><td>REST controller</td><td>Handles album list, create, update, fetch, and delete requests</td></tr>
+<tr><td><code>InfoController</code></td><td>Presentation</td><td>REST controller</td><td>Exposes active profiles, bound services, and request metadata</td></tr>
+<tr><td><code>ErrorController</code></td><td>Presentation</td><td>REST controller</td><td>Exposes controlled failure endpoints for operational testing</td></tr>
+<tr><td><code>SpringApplicationContextInitializer</code></td><td>Business Logic</td><td>Application initializer</td><td>Detects bound services, validates profiles, and excludes unused auto-configuration</td></tr>
+<tr><td><code>AlbumRepositoryPopulator</code></td><td>Business Logic</td><td>Startup listener</td><td>Loads demo album data after startup when the repository is empty</td></tr>
+<tr><td><code>JpaAlbumRepository</code></td><td>Data Access</td><td>Spring Data repository</td><td>Default relational persistence implementation</td></tr>
+<tr><td><code>MongoAlbumRepository</code></td><td>Data Access</td><td>Spring Data repository</td><td>MongoDB persistence implementation for the <code>mongodb</code> profile</td></tr>
+<tr><td><code>RedisAlbumRepository</code></td><td>Data Access</td><td>Custom repository</td><td>Redis hash-based persistence implementation for the <code>redis</code> profile</td></tr>
+<tr><td><code>RedisConfig</code></td><td>Infrastructure</td><td>Configuration class</td><td>Creates the Redis template and serializers used by the Redis repository</td></tr>
+<tr><td><code>Album</code></td><td>Data Access</td><td>Entity / document model</td><td>Shared album model reused across all persistence implementations</td></tr>
+<tr><td><code>RandomIdGenerator</code></td><td>Infrastructure</td><td>Identifier generator</td><td>Produces UUID-based string identifiers</td></tr>
+</tbody></table></div></div>
+</div>
+<div id="tab-api" class="tab-panel">
+  <div class="fact-content"><h1 id="api-service-communication-contracts">API & Service Communication Contracts</h1>
+<p>Spring Music exposes a small REST API for album CRUD plus a few diagnostic endpoints, all served from a single Spring Boot process. Communication is entirely synchronous HTTP with JSON payloads and no downstream service-to-service API calls.</p>
+<h2 id="service-catalog">Service Catalog</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Port</th><th>Category</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td>8080 default</td><td>API Layer</td><td>Serves the AngularJS UI, album CRUD API, diagnostic endpoints, and actuator endpoints</td></tr>
+</tbody></table></div>
+<h2 id="api-endpoints-inventory">API Endpoints Inventory</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Method</th><th>Path</th><th>Request Type</th><th>Response Type</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/albums</code></td><td>None</td><td><code>200 OK</code> with <code>Iterable<Album></code></td></tr>
+<tr><td><code>spring-music</code></td><td>PUT</td><td><code>/albums</code></td><td>JSON request body mapped to mutable <code>Album</code></td><td><code>200 OK</code> with saved <code>Album</code></td></tr>
+<tr><td><code>spring-music</code></td><td>POST</td><td><code>/albums</code></td><td>JSON request body mapped to mutable <code>Album</code></td><td><code>200 OK</code> with saved <code>Album</code></td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/albums/{id}</code></td><td>Path parameter <code>id</code></td><td><code>200 OK</code> with <code>Album</code> or empty body when not found</td></tr>
+<tr><td><code>spring-music</code></td><td>DELETE</td><td><code>/albums/{id}</code></td><td>Path parameter <code>id</code></td><td><code>200 OK</code> with empty body</td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/request</code></td><td><code>HttpServletRequest</code> context only</td><td><code>200 OK</code> with <code>Map<String,String></code></td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/appinfo</code></td><td>None</td><td><code>200 OK</code> with <code>ApplicationInfo</code></td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/service</code></td><td>None</td><td><code>200 OK</code> with <code>List<CfService></code></td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/errors/kill</code></td><td>None</td><td>Process exit after request</td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/errors/fill-heap</code></td><td>None</td><td>Unbounded memory allocation until failure</td></tr>
+<tr><td><code>spring-music</code></td><td>GET</td><td><code>/errors/throw</code></td><td>None</td><td>Throws <code>NullPointerException</code>, resulting in server error</td></tr>
+</tbody></table></div>
+<p>API versioning is not implemented; routes are unversioned.</p>
+<h2 id="management-observability-endpoints">Management & Observability Endpoints</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Endpoint</th><th>Custom Metrics (if any)</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td><code>/actuator/*</code></td><td>No custom metrics detected</td></tr>
+<tr><td><code>spring-music</code></td><td><code>/actuator/health</code> with details enabled</td><td>No custom metrics detected</td></tr>
+</tbody></table></div>
+<h2 id="dtos-contracts">DTOs & Contracts</h2>
+<p>The API reuses <code>Album</code> as both the request and response contract for album create and update operations, so the persistence model is exposed directly over HTTP rather than being wrapped in separate request or response DTOs. <code>Album</code> is a mutable POJO with getters and setters, while <code>ApplicationInfo</code> is a lightweight mutable response DTO carrying active profiles and bound service names. The <code>/request</code> endpoint returns a generic string map derived from the current servlet request, and <code>/service</code> exposes Cloud Foundry <code>CfService</code> objects directly.</p>
+<p>No OpenAPI or Swagger specification, GraphQL schema, or protobuf contract was found. JSON serialization is handled by Spring Boot's default Jackson integration, and the Redis profile uses Jackson JSON serialization for repository storage as well.</p>
+<h2 id="communication-patterns">Communication Patterns</h2>
+<p>All request handling is synchronous. The AngularJS front end calls same-origin Spring MVC endpoints over HTTP and receives JSON responses. Inside the application, controllers delegate directly to a <code>CrudRepository<Album, String></code> abstraction, which resolves to JPA, MongoDB, or Redis implementations depending on the active profile.</p>
+<p>No asynchronous messaging, retry policy, timeout policy, circuit breaker, service discovery for inter-service API calls, or API gateway layer is implemented. Startup service discovery is limited to Cloud Foundry binding inspection in <code>SpringApplicationContextInitializer</code>, which selects a profile before the application becomes available. Security posture is minimal: no application-level authentication, authorization, or TLS enforcement is configured in code, so endpoints are publicly accessible unless protected externally by the platform or deployment environment. An optional <code>http2</code> profile enables HTTP/2 support.</p>
+<h2 id="service-technology-matrix">Service Technology Matrix</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Web</th><th>Data Access</th><th>Discovery</th><th>Gateway</th><th>Actuator</th><th>Cache</th><th>Metrics</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td>Spring MVC + static AngularJS assets</td><td>Spring Data JPA, Spring Data MongoDB, custom Redis repository</td><td>Cloud Foundry service binding detection at startup</td><td>None</td><td>Yes</td><td>Redis profile only</td><td>Actuator defaults only</td></tr>
+</tbody></table></div>
+<h2 id="service-communication-sequence">Service Communication Sequence</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant User
+    participant Browser as "AngularJS UI"
+    participant Api as "AlbumController"
+    participant Repo as "CrudRepository Album"
+    participant Store as "Profile selected store"
+
+    User->>Browser: Browse or edit album catalog
+    Browser->>Api: GET or PUT or POST /albums
+    Api->>Repo: findAll() or save(album)
+    Repo->>Store: Query or persist Album
+    Store-->>Repo: Album data
+    Repo-->>Api: Album or collection
+    Api-->>Browser: JSON response
+    Browser-->>User: Render catalog updates
+</div></div>
+</div>
+<div id="tab-config" class="tab-panel">
+  <div class="fact-content"><h1 id="configuration-externalized-settings-inventory">Configuration & Externalized Settings Inventory</h1>
+<p>Spring Music uses a small set of configuration sources centered on Spring Boot YAML, Cloud Foundry deployment metadata, and Gradle build settings. Runtime behavior changes mostly through Spring profiles, service bindings, and environment variables rather than through a large property catalog.</p>
+<h2 id="configuration-sources">Configuration Sources</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Source</th><th>Type</th><th>Path/Location</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Spring Boot application config</td><td>YAML</td><td><code>src/main/resources/application.yml</code></td><td>Defines default JPA behavior, actuator exposure, HTTP/2 toggle, and profile-specific datasource settings</td></tr>
+<tr><td>Build definition</td><td>Gradle</td><td><code>build.gradle</code></td><td>Declares plugins, Java compatibility, dependencies, boot image builder, and runtime drivers</td></tr>
+<tr><td>Build settings</td><td>Gradle</td><td><code>settings.gradle</code>, <code>gradle.properties</code>, <code>gradle/wrapper/gradle-wrapper.properties</code></td><td>Defines project name, version, and wrapper version</td></tr>
+<tr><td>Cloud Foundry manifest</td><td>YAML</td><td><code>manifest.yml</code></td><td>Sets app name, memory, route policy, deployment path, and environment variables</td></tr>
+<tr><td>Paketo buildpack config</td><td>TOML</td><td><code>project.toml</code></td><td>Disables Spring Cloud Bindings support and excludes build artifacts from image context</td></tr>
+<tr><td>Cloud Foundry service bindings</td><td>Environment</td><td><code>VCAP_SERVICES</code> and related platform variables</td><td>Read through Java CFEnv to select runtime profile and connection settings</td></tr>
+<tr><td>Seed data</td><td>JSON</td><td><code>src/main/resources/albums.json</code></td><td>Provides startup album catalog bootstrap data</td></tr>
+</tbody></table></div>
+<h2 id="build-profiles">Build Profiles</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Profile</th><th>Activation</th><th>Purpose</th><th>Key Dependencies/Plugins</th>
+</tr></thead><tbody>
+<tr><td><code>default</code></td><td>Automatic</td><td>Builds the executable Spring Boot jar</td><td>Spring Boot plugin <code>3.1.5</code>, dependency management <code>1.1.3</code>, Java plugin</td></tr>
+<tr><td><code>bootBuildImage</code></td><td>Manual Gradle task</td><td>Produces a container image with Paketo buildpacks</td><td>Builder <code>paketobuildpacks/builder-jammy-base:latest</code></td></tr>
+</tbody></table></div>
+<p>No custom Gradle flavor matrix or environment-specific build profiles were defined.</p>
+<h2 id="runtime-profiles">Runtime Profiles</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Profile</th><th>Activation Method</th><th>Config Files</th><th>Key Overrides</th>
+</tr></thead><tbody>
+<tr><td><code>default</code></td><td>No explicit profile</td><td><code>application.yml</code></td><td>Enables JPA DDL generation and uses the default relational path</td></tr>
+<tr><td><code>http2</code></td><td><code>SPRING_PROFILES_ACTIVE=http2</code> or <code>-Dspring.profiles.active=http2</code></td><td><code>application.yml</code></td><td>Sets <code>server.http2.enabled=true</code></td></tr>
+<tr><td><code>mysql</code></td><td>Active profile or Cloud Foundry service tag detection</td><td><code>application.yml</code></td><td>Configures MySQL JDBC URL, driver, and Hibernate dialect</td></tr>
+<tr><td><code>postgres</code></td><td>Active profile or Cloud Foundry service tag detection</td><td><code>application.yml</code></td><td>Configures PostgreSQL JDBC URL, driver, and Hibernate dialect</td></tr>
+<tr><td><code>mongodb</code></td><td>Active profile or Cloud Foundry service tag detection</td><td>Code-based <code>@Profile("mongodb")</code> beans</td><td>Activates Mongo repository and excludes JDBC and Redis auto-configuration</td></tr>
+<tr><td><code>redis</code></td><td>Active profile or Cloud Foundry service tag detection</td><td>Code-based <code>@Profile("redis")</code> beans</td><td>Activates Redis repository and excludes JDBC and Mongo auto-configuration</td></tr>
+<tr><td><code>oracle</code>, <code>sqlserver</code></td><td>Cloud Foundry service tag detection</td><td>No profile-specific file</td><td>Use default JPA path with service binding-derived datasource settings</td></tr>
+</tbody></table></div>
+<p>Only one persistence-oriented profile may be active at a time; the initializer throws an exception if multiple storage profiles are enabled together.</p>
+<h2 id="properties-inventory">Properties Inventory</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Property Key</th><th>Default</th><th>Profiles</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td><code>spring.jpa.generate-ddl</code></td><td><code>true</code></td><td>default and inherited unless overridden externally</td><td><code>application.yml</code></td></tr>
+<tr><td><code>management.endpoints.web.exposure.include</code></td><td><code>*</code></td><td>all</td><td><code>application.yml</code></td></tr>
+<tr><td><code>management.endpoint.health.show-details</code></td><td><code>always</code></td><td>all</td><td><code>application.yml</code></td></tr>
+<tr><td><code>server.http2.enabled</code></td><td><code>true</code></td><td><code>http2</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.url</code></td><td><code>jdbc:mysql://localhost/music</code></td><td><code>mysql</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.driver-class-name</code></td><td><code>com.mysql.jdbc.Driver</code></td><td><code>mysql</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.username</code></td><td>empty</td><td><code>mysql</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.password</code></td><td>empty</td><td><code>mysql</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.jpa.properties.hibernate.dialect</code></td><td><code>org.hibernate.dialect.MySQL55Dialect</code></td><td><code>mysql</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.url</code></td><td><code>jdbc:postgresql://localhost/music</code></td><td><code>postgres</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.driver-class-name</code></td><td><code>org.postgresql.Driver</code></td><td><code>postgres</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.username</code></td><td><code>postgres</code></td><td><code>postgres</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.datasource.password</code></td><td>empty</td><td><code>postgres</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.jpa.properties.hibernate.dialect</code></td><td><code>org.hibernate.dialect.ProgressDialect</code></td><td><code>postgres</code></td><td><code>application.yml</code></td></tr>
+<tr><td><code>spring.autoconfigure.exclude</code></td><td>computed at startup</td><td><code>mongodb</code>, <code>redis</code>, default SQL path</td><td>Injected by <code>SpringApplicationContextInitializer</code></td></tr>
+<tr><td><code>SPRING_PROFILES_ACTIVE</code></td><td><code>http2</code> in Cloud Foundry manifest</td><td>deployment-specific</td><td><code>manifest.yml</code> environment</td></tr>
+<tr><td><code>JBP_CONFIG_SPRING_AUTO_RECONFIGURATION</code></td><td><code>{enabled: false}</code></td><td>deployment-specific</td><td><code>manifest.yml</code> environment</td></tr>
+<tr><td><code>JBP_CONFIG_OPEN_JDK_JRE</code></td><td><code>{ jre: { version: 17.+ } }</code></td><td>deployment-specific</td><td><code>manifest.yml</code> environment</td></tr>
+<tr><td><code>BP_SPRING_CLOUD_BINDINGS_DISABLED</code></td><td><code>true</code></td><td>buildpack image builds</td><td><code>project.toml</code></td></tr>
+</tbody></table></div>
+<h2 id="startup-parameters-resource-requirements">Startup Parameters & Resource Requirements</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>JVM/Runtime Options</th><th>Memory</th><th>Instance Count</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td><code>-Dspring.profiles.active=<profile></code> supported for local runs; <code>SPRING_PROFILES_ACTIVE=http2</code> in Cloud Foundry manifest; Java 17 JRE requested via buildpack config</td><td><code>1G</code> in <code>manifest.yml</code></td><td>Not specified</td></tr>
+</tbody></table></div>
+<p>No explicit <code>-Xms</code>, <code>-Xmx</code>, CPU limits, or horizontal scaling settings were found in the repository.</p>
+<h2 id="startup-dependency-chain">Startup Dependency Chain</h2>
+<ol>
+<li><code>Application</code> starts the Spring Boot app and registers <code>SpringApplicationContextInitializer</code> before the context refresh.</li>
+<li><code>SpringApplicationContextInitializer</code> reads Cloud Foundry services through Java CFEnv, validates that at most one persistence profile is active, and injects <code>spring.autoconfigure.exclude</code> to disable unused data auto-configuration.</li>
+<li>Spring Boot completes auto-configuration for the selected persistence path and exposes the REST controllers and actuator endpoints.</li>
+<li><code>AlbumRepositoryPopulator</code> runs on <code>ApplicationReadyEvent</code> and loads <code>albums.json</code> only when the selected repository is empty.</li>
+</ol>
+<p>There is no explicit container wait script or external readiness dependency beyond the selected datastore being reachable through Spring Boot or Cloud Foundry service bindings.</p>
+<h2 id="secrets-sensitive-configuration">Secrets & Sensitive Configuration</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Secret Reference</th><th>Type</th><th>Storage (masked)</th>
+</tr></thead><tbody>
+<tr><td><code>spring.datasource.username</code></td><td>Database username</td><td><code>[MASKED]</code> or service binding value</td></tr>
+<tr><td><code>spring.datasource.password</code></td><td>Database password</td><td><code>[MASKED]</code> or service binding value</td></tr>
+<tr><td>Cloud Foundry service credentials</td><td>Connection URI / credentials</td><td><code>[MASKED]</code> in <code>VCAP_SERVICES</code></td></tr>
+</tbody></table></div>
+<h3 id="secrets-provisioning-workflow">Secrets Provisioning Workflow</h3>
+<p>Secrets are expected to come from environment-bound services rather than from source-controlled files. In local profile examples, usernames and passwords are left blank or defaulted in <code>application.yml</code>, while Cloud Foundry deployments rely on bound service credentials that Java CFEnv reads at startup to derive datasource or service connection details. No dedicated Vault, Key Vault, AWS Secrets Manager, or encrypted property framework was detected.</p>
+<h2 id="feature-flags">Feature Flags</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Flag Name</th><th>Default</th><th>Controlled By</th>
+</tr></thead><tbody>
+<tr><td>None detected</td><td>N/A</td><td>Runtime profile selection is used instead of feature flags</td></tr>
+</tbody></table></div>
+<h2 id="framework-runtime-versions">Framework & Runtime Versions</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Component</th><th>Version</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td>Java source and target compatibility</td><td>17</td><td><code>build.gradle</code></td></tr>
+<tr><td>Spring Boot plugin</td><td>3.1.5</td><td><code>build.gradle</code></td></tr>
+<tr><td>Spring dependency management plugin</td><td>1.1.3</td><td><code>build.gradle</code></td></tr>
+<tr><td>Java CFEnv</td><td>3.1.2</td><td><code>build.gradle</code></td></tr>
+<tr><td>Gradle wrapper</td><td>7.6.2</td><td><code>gradle/wrapper/gradle-wrapper.properties</code></td></tr>
+<tr><td>Bootstrap WebJar</td><td>3.1.1</td><td><code>build.gradle</code></td></tr>
+<tr><td>AngularJS WebJar</td><td>1.2.16</td><td><code>build.gradle</code></td></tr>
+<tr><td>Angular UI WebJar</td><td>0.4.0-2</td><td><code>build.gradle</code></td></tr>
+<tr><td>Angular UI Bootstrap WebJar</td><td>0.10.0-1</td><td><code>build.gradle</code></td></tr>
+<tr><td>jQuery WebJar</td><td>2.1.0-2</td><td><code>build.gradle</code></td></tr>
+<tr><td>Paketo builder</td><td><code>paketobuildpacks/builder-jammy-base:latest</code></td><td><code>build.gradle</code></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="tab-workflows" class="tab-panel">
+  <div class="fact-content"><h1 id="core-business-workflows">Core Business Workflows</h1>
+<p>Spring Music lets users browse and maintain a shared catalog of music albums while demonstrating how the same workflow can run on top of different persistence technologies. The application also exposes a few operational workflows for environment introspection and failure simulation.</p>
+<h2 id="domain-entities">Domain Entities</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Service / Bounded Context</th><th>Description</th><th>Key Relationships</th>
+</tr></thead><tbody>
+<tr><td><code>Album</code></td><td><code>spring-music</code> / Album Catalog</td><td>Represents one music album that users can create, update, view, and delete</td><td>No persisted relationships to other entities</td></tr>
+<tr><td><code>ApplicationInfo</code></td><td><code>spring-music</code> / Runtime Diagnostics</td><td>Summarizes active profiles and bound service names for the running application</td><td>Derived from runtime environment rather than persisted data</td></tr>
+</tbody></table></div>
+<h2 id="service-to-domain-mapping">Service-to-Domain Mapping</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Domain Context</th><th>Owned Entities</th><th>External Dependencies</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td>Album catalog management and diagnostics</td><td><code>Album</code>, <code>ApplicationInfo</code> response model</td><td>Selected datastore, Cloud Foundry service bindings, actuator endpoints</td></tr>
+</tbody></table></div>
+<h2 id="primary-workflows">Primary Workflows</h2>
+<h3 id="workflow-1-browse-and-maintain-the-album-catalog">Workflow 1: Browse and maintain the album catalog</h3>
+<ol>
+<li>A browser loads the AngularJS single-page application and requests the current album list from <code>GET /albums</code>.</li>
+<li><code>AlbumController</code> delegates directly to the active <code>CrudRepository<Album, String></code> implementation.</li>
+<li>The selected repository reads album data from the current backing store and returns it as JSON.</li>
+<li>When a user adds or edits an album, the browser submits the album document to <code>PUT /albums</code> or <code>POST /albums</code>.</li>
+<li>The repository persists the record and returns the saved album, after generating an identifier if the store path requires one.</li>
+<li>When a user deletes an album, the browser calls <code>DELETE /albums/{id}</code> and the repository removes it from the backing store.</li>
+</ol>
+<p>Business rules involved: album updates always flow through the shared repository abstraction; an album id is generated automatically when one is missing; and the same UI workflow works regardless of whether the active store is relational, MongoDB, or Redis.</p>
+<h3 id="workflow-2-select-the-storage-profile-at-startup">Workflow 2: Select the storage profile at startup</h3>
+<ol>
+<li>The application starts with <code>SpringApplicationContextInitializer</code> registered before the Spring context refresh.</li>
+<li>The initializer reads active profiles and Cloud Foundry bound service tags.</li>
+<li>It fails startup if more than one persistence-oriented profile is active at the same time.</li>
+<li>It activates the detected storage profile when an eligible bound service is present.</li>
+<li>It injects exclusions for incompatible auto-configuration classes so that only the chosen persistence path is enabled.</li>
+</ol>
+<p>Business rules involved: only one persistence technology can be selected for a running instance, and the environment is the source of truth when Cloud Foundry services are bound.</p>
+<h3 id="workflow-3-seed-demo-data-after-the-application-becomes-ready">Workflow 3: Seed demo data after the application becomes ready</h3>
+<ol>
+<li>After startup completes, <code>AlbumRepositoryPopulator</code> listens for <code>ApplicationReadyEvent</code>.</li>
+<li>It checks whether the active repository already contains any albums.</li>
+<li>If the repository is empty, it loads the bundled <code>albums.json</code> file and saves each album into the selected store.</li>
+<li>If the repository already has data, no bootstrap write occurs.</li>
+</ol>
+<p>Business rules involved: seed data is inserted only once per empty store, preserving user-managed content on later starts.</p>
+<h3 id="workflow-4-inspect-or-test-runtime-behavior">Workflow 4: Inspect or test runtime behavior</h3>
+<p>Operators or testers can call <code>/appinfo</code> and <code>/service</code> to see active profiles and bound services, or invoke <code>/errors/*</code> endpoints to deliberately terminate the process, exhaust memory, or throw an exception when validating platform behavior.</p>
+<h2 id="cross-service-data-flows">Cross-Service Data Flows</h2>
+<p>No multi-service business flow or gateway aggregation pattern exists in this repository. All album catalog actions execute inside the single <code>spring-music</code> service. The only external data composition is startup inspection of Cloud Foundry service bindings, which influences profile selection but does not create a user-visible aggregate response.</p>
+<h2 id="business-workflow-sequence">Business Workflow Sequence</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant User
+    participant UI as "AngularJS UI"
+    participant Api as "AlbumController"
+    participant Repo as "Album Repository"
+    participant Store as "Selected Data Store"
+
+    User->>UI: View and manage album catalog
+    UI->>Api: GET /albums
+    Api->>Repo: Load all albums
+    Repo->>Store: Read album records
+    Store-->>Repo: Album list
+    Repo-->>Api: Album list
+    Api-->>UI: JSON albums
+    UI-->>User: Render album catalog
+
+    User->>UI: Save album changes
+    UI->>Api: PUT or POST /albums
+    Api->>Repo: Persist album
+    Repo->>Store: Insert or update record
+    Store-->>Repo: Saved album
+    Repo-->>Api: Saved album
+    Api-->>UI: JSON saved album
+    UI-->>User: Show updated catalog
+</div>
+<h2 id="business-rules-decision-logic">Business Rules & Decision Logic</h2>
+<ul>
+<li><strong>Profile exclusivity</strong>: only one of the persistence-oriented profiles may be active at a time; otherwise startup fails.</li>
+<li><strong>Environment-driven store selection</strong>: Cloud Foundry service tags can activate <code>mysql</code>, <code>postgres</code>, <code>mongodb</code>, <code>redis</code>, <code>oracle</code>, or <code>sqlserver</code> behavior without code changes.</li>
+<li><strong>Bootstrap rule</strong>: album seed data is loaded only when the selected repository is empty.</li>
+<li><strong>Identifier generation</strong>: album identifiers are generated automatically by Hibernate's custom UUID generator or by the Redis repository when a submitted album lacks an id.</li>
+<li><strong>Validation and integrity</strong>: the controller methods use <code>@Valid</code>, but no server-side bean validation constraints were found on <code>Album</code>; the browser enforces a four-digit year pattern during modal editing.</li>
+<li><strong>Transactions and error handling</strong>: repository operations rely on the default behavior of the selected Spring Data implementation; the dedicated <code>/errors/*</code> routes intentionally produce failure conditions for operational testing rather than normal business recovery.</li>
+<li><strong>Authorization</strong>: no business-level authorization rules or ownership checks were detected.</li>
+</ul></div>
+</div>
+<div id="tab-deps" class="tab-panel">
+  <div class="fact-content"><h1 id="dependency-map">Dependency Map</h1>
+<p>Spring Music declares a compact dependency set centered on Spring Boot starters, Cloud Foundry integration, and a legacy browser UI stack. The project has 14 direct non-test dependencies plus 2 direct test dependencies declared in <code>build.gradle</code>.</p>
+<h2 id="dependencies">Dependencies</h2>
+<div class="mermaid">
+flowchart LR
+    App["Spring Music"]
+
+    subgraph Web["Web Frameworks"]
+        BootWeb["spring-boot-starter-web
+managed by Spring Boot 3.1.5"]
+        Actuator["spring-boot-starter-actuator
+managed by Spring Boot 3.1.5"]
+        Validation["spring-boot-starter-validation
+managed by Spring Boot 3.1.5"]
+        Bootstrap["bootstrap 3.1.1"]
+        Angular["angularjs 1.2.16"]
+        AngularUi["angular-ui 0.4.0-2"]
+        AngularUiBoot["angular-ui-bootstrap 0.10.0-1"]
+        JQuery["jquery 2.1.0-2"]
+    end
+    subgraph DB["Database / ORM"]
+        Jpa["spring-boot-starter-data-jpa
+managed by Spring Boot 3.1.5"]
+        Mongo["spring-boot-starter-data-mongodb
+managed by Spring Boot 3.1.5"]
+        Redis["spring-boot-starter-data-redis
+managed by Spring Boot 3.1.5"]
+        H2["h2
+runtime"]
+        Mysql["mysql-connector-j
+runtime"]
+        Pg["postgresql
+runtime"]
+        SqlServer["mssql-jdbc
+runtime"]
+    end
+    subgraph Cache["Caching"]
+        Pool["commons-pool2
+runtime"]
+    end
+    subgraph Obs["Observability"]
+        ActNode["Actuator endpoints
+via starter"]
+    end
+    subgraph Util["Utilities"]
+        CfEnv["java-cfenv-boot 3.1.2"]
+    end
+
+    App -->|"web"| Web
+    App -->|"persistence"| DB
+    App -->|"connection pooling"| Cache
+    App -->|"observability"| Obs
+    App -->|"platform integration"| Util
+    Actuator -.->|"provides"| ActNode
+</div>
+<h3 id="dependency-summary">Dependency Summary</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Category</th><th>Count</th><th>Key Libraries</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Web Frameworks</td><td>8</td><td>Spring Boot Web, Actuator, Validation, AngularJS, Bootstrap</td><td>Combines a modern Spring Boot backend with an older browser UI stack</td></tr>
+<tr><td>Database / ORM</td><td>7</td><td>Spring Data JPA, MongoDB, Redis, H2, MySQL, PostgreSQL, SQL Server drivers</td><td>Enables profile-selected persistence across multiple store types</td></tr>
+<tr><td>Caching</td><td>1</td><td>commons-pool2</td><td>Runtime pooling support used by data clients</td></tr>
+<tr><td>Observability</td><td>1</td><td>spring-boot-starter-actuator</td><td>Exposes management endpoints</td></tr>
+<tr><td>Utilities</td><td>1</td><td>java-cfenv-boot 3.1.2</td><td>Detects Cloud Foundry service bindings</td></tr>
+</tbody></table></div>
+<h3 id="version-compatibility-risks">Version & Compatibility Risks</h3>
+<p>The backend stack is reasonably current at Spring Boot 3.1.5 and Java 17, but the browser dependencies are notably old: AngularJS 1.2.16, Bootstrap 3.1.1, and jQuery 2.1.0-2 are legacy libraries with modernization and security considerations. The MySQL profile still references the legacy <code>com.mysql.jdbc.Driver</code> class name in configuration, which is a migration concern for newer connector generations.</p>
+<h3 id="notable-observations">Notable Observations</h3>
+<ul>
+<li>All Spring starter versions are inherited from the Spring Boot 3.1.5 dependency management BOM rather than pinned individually.</li>
+<li>The application keeps three persistence models in one deployable by declaring JPA, MongoDB, and Redis starters together.</li>
+<li>SQL connectivity is runtime-only, allowing one artifact to target H2, MySQL, PostgreSQL, or SQL Server depending on environment.</li>
+<li>No dedicated logging or security libraries are added beyond the defaults supplied transitively by Spring Boot starters.</li>
+</ul>
+<h2 id="test-dependencies">Test Dependencies</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Framework</th><th>Version</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td><code>junit:junit</code></td><td>Managed by Spring Boot 3.1.5</td><td>Supports the existing JUnit 4 <code>ApplicationTests</code> class</td></tr>
+<tr><td><code>spring-boot-starter-test</code></td><td>Managed by Spring Boot 3.1.5</td><td>Provides Spring test support for context loading</td></tr>
+</tbody></table></div>
+<p>Total test-scope dependencies: 2</p>
+<p>The test stack is minimal and centered on application startup verification. No separate integration-test framework, contract-testing library, or containerized test infrastructure is declared.</p></div>
+</div>
+<div id="tab-data" class="tab-panel">
+  <div class="fact-content"><h1 id="data-architecture-persistence-layer">Data Architecture & Persistence Layer</h1>
+<p>Spring Music has a deliberately simple domain model centered on a single <code>Album</code> record, but it supports multiple persistence backends chosen by Spring profile. The data layer mixes Spring Data repositories with a custom Redis repository while seeding demo content from a bundled JSON file.</p>
+<h2 id="database-configuration">Database Configuration</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service/Module</th><th>DB Type</th><th>Profile</th><th>Driver</th><th>Connection</th><th>Migration Tool</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td>In-memory relational database</td><td>default</td><td>H2 runtime driver</td><td>Spring Boot auto-configured datasource</td><td>None detected</td></tr>
+<tr><td><code>spring-music</code></td><td>MySQL</td><td><code>mysql</code></td><td><code>com.mysql.jdbc.Driver</code></td><td><code>jdbc:mysql://localhost/music</code></td><td>None detected</td></tr>
+<tr><td><code>spring-music</code></td><td>PostgreSQL</td><td><code>postgres</code></td><td><code>org.postgresql.Driver</code></td><td><code>jdbc:postgresql://localhost/music</code></td><td>None detected</td></tr>
+<tr><td><code>spring-music</code></td><td>MongoDB</td><td><code>mongodb</code></td><td>Spring Data MongoDB starter</td><td>Service binding or Spring Boot defaults</td><td>None detected</td></tr>
+<tr><td><code>spring-music</code></td><td>Redis</td><td><code>redis</code></td><td>Spring Data Redis starter</td><td>Service binding or Spring Boot defaults</td><td>None detected</td></tr>
+</tbody></table></div>
+<p>Schema management is handled by Spring Boot and Hibernate with DDL generation enabled for the relational path, while seed data comes from the bundled <code>albums.json</code> file loaded after startup when the repository is empty.</p>
+<h2 id="data-ownership-per-service">Data Ownership per Service</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Tables Owned</th><th>ORM Framework</th><th>Caching</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td><code>Album</code> table, collection, or Redis hash depending on profile</td><td>Spring Data JPA by default, Spring Data MongoDB for <code>mongodb</code>, custom Redis repository for <code>redis</code></td><td>Redis acts as the primary store in the <code>redis</code> profile rather than as a secondary cache</td><td>Single-service application with one shared album catalog model</td></tr>
+</tbody></table></div>
+<h2 id="entity-model">Entity Model</h2>
+<div class="mermaid">
+erDiagram
+    Album {
+        string id PK
+        string title
+        string artist
+        string releaseYear
+        string genre
+        int trackCount
+        string albumId
+    }
+</div>
+<p>The entity model contains one persisted domain type and no explicit relationships to other persisted entities.</p>
+<h2 id="key-repository-methods">Key Repository Methods</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Repository</th><th>Notable Methods</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td><code>spring-music</code></td><td><code>JpaAlbumRepository</code></td><td>Inherited <code>JpaRepository</code> CRUD methods</td><td>Default relational persistence for <code>Album</code></td></tr>
+<tr><td><code>spring-music</code></td><td><code>MongoAlbumRepository</code></td><td>Inherited <code>MongoRepository</code> CRUD methods</td><td>MongoDB persistence for <code>Album</code></td></tr>
+<tr><td><code>spring-music</code></td><td><code>RedisAlbumRepository</code></td><td><code>save</code>, <code>findById</code>, <code>findAll</code>, <code>findAllById</code>, <code>deleteById</code>, <code>deleteAll</code></td><td>Stores albums in the Redis hash named <code>albums</code></td></tr>
+<tr><td><code>spring-music</code></td><td><code>AlbumRepositoryPopulator</code></td><td>Startup <code>populate</code> logic</td><td>Loads <code>albums.json</code> data when the active repository is empty</td></tr>
+</tbody></table></div>
+<p>No custom query derivation, JPQL, native SQL, or stored procedure calls were found.</p>
+<h2 id="caching-strategy">Caching Strategy</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Layer</th><th>Provider</th><th>Pattern</th><th>Scope</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Primary persistence in <code>redis</code> profile</td><td>Redis via <code>RedisTemplate<String, Album></code></td><td>Key-value / hash storage</td><td>Album repository</td><td>Redis is used as the system of record for albums when the <code>redis</code> profile is active</td></tr>
+<tr><td>Other profiles</td><td>None detected</td><td>None</td><td>N/A</td><td>The application does not use Spring cache annotations or a second-level cache</td></tr>
+</tbody></table></div>
+<p>The Redis configuration applies Jackson JSON serialization to album values and string serialization to keys and hash keys.</p>
+<h2 id="data-ownership-boundaries">Data Ownership Boundaries</h2>
+<p>This is a single-service application, so all album data is owned inside the <code>spring-music</code> process. The only boundary variation is storage technology: relational persistence for the default, <code>mysql</code>, <code>postgres</code>, <code>oracle</code>, and <code>sqlserver</code> paths; document persistence for <code>mongodb</code>; and hash-based persistence for <code>redis</code>.</p>
+<p>There is no cross-service database access, no CQRS split, and no read model maintained outside the selected repository implementation. Controllers access data only through the <code>CrudRepository<Album, String></code> abstraction, allowing the active profile to swap the underlying store without changing API logic.</p>
+<h3 id="data-classification-sensitivity">Data Classification & Sensitivity</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Sensitive Fields</th><th>Classification (PII/PHI/PCI/None)</th><th>Controls in Place</th>
+</tr></thead><tbody>
+<tr><td><code>Album</code></td><td>None detected</td><td>None</td><td>No special controls required for the stored fields</td></tr>
+</tbody></table></div>
+<p>No PII, PHI, or PCI data detected in the entity model.</p></div>
+</div>
+<p class="footer">Your feedback is invaluable &mdash; <a href="https://aka.ms/ghcp-appmod/feedback">Share feedback</a></p>
+<script>
+function toggleRow(rowId, triggerRow) {
+  var detail = document.getElementById(rowId);
+  var btn = document.getElementById('btn-' + rowId);
+  if (!detail) return;
+  var visible = detail.style.display !== 'none';
+  detail.style.display = visible ? 'none' : 'table-row';
+  if (btn) btn.classList.toggle('open', !visible);
+}
+(function() {
+  var nav = document.querySelector('.tab-nav');
+  if (!nav) return;
+  nav.addEventListener('click', function(e) {
+    var btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    var targetId = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    var panel = document.getElementById(targetId);
+    if (panel) {
+      panel.classList.add('active');
+      if (window.__mermaidReady) { window.__renderMermaidIn(panel); }
+    }
+  });
+})();
+
+// ── Diagram lightbox ────────────────────────────────────────
+(function() {
+  var lightbox = document.getElementById('diagram-lightbox');
+  var inner = document.getElementById('diagram-lightbox-inner');
+  var closeBtn = document.getElementById('diagram-lightbox-close');
+  if (!lightbox || !inner || !closeBtn) return;
+
+  var scale = 1;
+  var translateX = 0;
+  var translateY = 0;
+  var isDragging = false;
+  var dragStartX = 0;
+  var dragStartY = 0;
+
+  function applyTransform() {
+    var svg = inner.querySelector('svg');
+    if (svg) {
+      svg.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+      svg.style.transformOrigin = 'center center';
+      svg.style.transition = 'none';
+    }
+  }
+
+  function resetTransform() {
+    scale = 1; translateX = 0; translateY = 0;
+    applyTransform();
+  }
+
+  function openLightbox(svgEl) {
+    inner.innerHTML = svgEl.outerHTML;
+    var injected = inner.querySelector('svg');
+    if (injected) {
+      injected.removeAttribute('width');
+      injected.removeAttribute('height');
+      injected.style.cursor = 'grab';
+    }
+    resetTransform();
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    inner.innerHTML = '';
+    document.body.style.overflow = '';
+    resetTransform();
+  }
+
+  inner.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(Math.max(scale * delta, 0.3), 8);
+    applyTransform();
+  }, { passive: false });
+
+  inner.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    isDragging = true;
+    dragStartX = e.clientX - translateX;
+    dragStartY = e.clientY - translateY;
+    var svg = inner.querySelector('svg');
+    if (svg) { svg.style.cursor = 'grabbing'; }
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    translateX = e.clientX - dragStartX;
+    translateY = e.clientY - dragStartY;
+    applyTransform();
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!isDragging) return;
+    isDragging = false;
+    var svg = inner.querySelector('svg');
+    if (svg) { svg.style.cursor = 'grab'; }
+  });
+
+  inner.addEventListener('dblclick', function() { resetTransform(); });
+
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.mermaid');
+    if (!card) return;
+    if (e.target.closest('.diagram-lightbox-close')) return;
+    var svg = card.querySelector('svg');
+    if (svg) { openLightbox(svg); }
+  });
+
+  closeBtn.addEventListener('click', closeLightbox);
+
+  lightbox.addEventListener('click', function(e) {
+    if (e.target === lightbox) { closeLightbox(); }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeLightbox(); }
+  });
+})();
+
+var _currentTarget = '';
+
+function toggleMultiSelect(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  document.querySelectorAll('.multi-select.open').forEach(function(ms) { if (ms.id !== id) ms.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.multi-select')) {
+    document.querySelectorAll('.multi-select.open').forEach(function(ms) { ms.classList.remove('open'); });
+  }
+});
+
+function getMultiSelectValues(msId) {
+  var el = document.getElementById(msId);
+  if (!el) return [];
+  var checked = el.querySelectorAll('input[type=checkbox]:checked');
+  var vals = [];
+  for (var i = 0; i < checked.length; i++) vals.push(checked[i].value);
+  return vals;
+}
+
+function onMultiSelectChange(msId, label) {
+  var el = document.getElementById(msId);
+  if (!el) return;
+  var vals = getMultiSelectValues(msId);
+  var total = el.querySelectorAll('input[type=checkbox]').length;
+  var btn = el.querySelector('.multi-select-btn');
+  if (btn) {
+    btn.textContent = vals.length > 0 && vals.length < total ? label + ' (' + vals.length + ')' : label;
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  var selectedDomains = getMultiSelectValues('domain-ms');
+  var selectedCrits = getMultiSelectValues('criticality-ms');
+
+  var sections = document.querySelectorAll('.issue-section');
+  for (var i = 0; i < sections.length; i++) {
+    var domain = sections[i].getAttribute('data-domain');
+    sections[i].style.display = (selectedDomains.length === 0 || selectedDomains.indexOf(domain) >= 0) ? '' : 'none';
+  }
+
+  var rows = document.querySelectorAll('.issue-row');
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var section = row.closest('.issue-section');
+    if (section && section.style.display === 'none') {
+      row.style.display = 'none';
+      var next = row.nextElementSibling;
+      if (next && next.classList.contains('detail-row')) next.style.display = 'none';
+      continue;
+    }
+
+    var show = true;
+    if (_currentTarget && row.hasAttribute('data-targets')) {
+      var targetsStr = row.getAttribute('data-targets');
+      if (targetsStr && targetsStr !== '{}') {
+        try {
+          var targets = JSON.parse(targetsStr);
+          if (Object.keys(targets).length > 0 && !targets[_currentTarget]) {
+            show = false;
+          }
+        } catch(e) {}
+      }
+    }
+
+    if (show && selectedCrits.length > 0) {
+      var crit = row.getAttribute('data-criticality');
+      if (selectedCrits.indexOf(crit) < 0) show = false;
+    }
+
+    row.style.display = show ? '' : 'none';
+    var nextRow = row.nextElementSibling;
+    if (nextRow && nextRow.classList.contains('detail-row')) {
+      if (!show) nextRow.style.display = 'none';
+    }
+  }
+}
+
+function clearAllFilters() {
+  document.querySelectorAll('.multi-select input[type=checkbox]').forEach(function(cb) { cb.checked = false; });
+  var domainBtn = document.querySelector('#domain-ms .multi-select-btn');
+  if (domainBtn) domainBtn.textContent = 'Domain';
+  var critBtn = document.querySelector('#criticality-ms .multi-select-btn');
+  if (critBtn) critBtn.textContent = 'Criticality';
+  applyFilters();
+}
+
+function onTargetChange(targetId) {
+  _currentTarget = targetId;
+  var rows = document.querySelectorAll('.issue-row[data-targets]');
+  var totalEffort = 0;
+  var domainCrits = {};
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var targets = JSON.parse(row.getAttribute('data-targets'));
+    var section = row.closest('.issue-section');
+    var domain = section ? section.getAttribute('data-domain') : '';
+
+    if (!targets || Object.keys(targets).length === 0) {
+      var sp = parseFloat(row.querySelector('.sp-cell').textContent) || 0;
+      totalEffort += sp;
+      if (!domainCrits[domain]) domainCrits[domain] = {mandatory:0,potential:0,optional:0};
+      var crit = row.getAttribute('data-criticality') || 'optional';
+      domainCrits[domain][crit] = (domainCrits[domain][crit] || 0) + 1;
+      continue;
+    }
+
+    var override = targets[targetId];
+    if (!override) {
+      continue;
+    }
+
+    var newSeverity = (override.severity || row.getAttribute('data-default-severity') || '').toLowerCase();
+    row.setAttribute('data-criticality', newSeverity);
+    var critCell = row.querySelector('.crit-cell');
+    if (critCell) {
+      var critText = newSeverity === 'mandatory' ? 'Mandatory' : newSeverity === 'potential' ? 'Potential' : 'Optional';
+      var cssClass = newSeverity === 'mandatory' ? 'crit-square-mandatory' : newSeverity === 'potential' ? 'crit-square-potential' : 'crit-square-optional';
+      critCell.innerHTML = '<span class="crit-label"><span class="crit-square ' + cssClass + '"></span>' + critText + '</span>';
+    }
+
+    var newEffort = override.effort !== undefined ? override.effort : parseFloat(row.getAttribute('data-default-effort')) || 0;
+    var spCell = row.querySelector('.sp-cell');
+    if (spCell) spCell.textContent = newEffort;
+    totalEffort += newEffort;
+
+    if (!domainCrits[domain]) domainCrits[domain] = {mandatory:0,potential:0,optional:0};
+    domainCrits[domain][newSeverity] = (domainCrits[domain][newSeverity] || 0) + 1;
+  }
+
+  var secSection = document.querySelector('.issue-section[data-domain="security"]');
+  if (secSection) {
+    var secRows = secSection.querySelectorAll('.issue-row');
+    for (var j = 0; j < secRows.length; j++) {
+      if (!secRows[j].hasAttribute('data-targets') || secRows[j].getAttribute('data-targets') === '') {
+        var sp = parseFloat(secRows[j].querySelector('.sp-cell').textContent) || 0;
+        totalEffort += sp;
+        if (!domainCrits['security']) domainCrits['security'] = {mandatory:0,potential:0,optional:0};
+        var sc = secRows[j].getAttribute('data-criticality') || 'optional';
+        domainCrits['security'][sc] = (domainCrits['security'][sc] || 0) + 1;
+      }
+    }
+  }
+
+  var label = totalEffort < 20 ? 'S' : totalEffort < 50 ? 'M' : totalEffort < 100 ? 'L' : 'XL';
+  var effortEl = document.getElementById('effort-display');
+  if (effortEl) effortEl.textContent = label + ' (total story points: ' + totalEffort + ')';
+
+  updateDonuts(domainCrits);
+  applyFilters();
+}
+
+function updateDonuts(domainCrits) {
+  var container = document.getElementById('donut-container');
+  if (!container) return;
+  container.innerHTML = '';
+  var domainNames = {'cloud-readiness':'Cloud Readiness','java-upgrade':'Java Upgrade','dotnet-upgrade':'DotNET Upgrade','security':'Security'};
+  var domainOrder = ['cloud-readiness','java-upgrade','dotnet-upgrade','security'];
+  for (var d = 0; d < domainOrder.length; d++) {
+    var key = domainOrder[d];
+    var c = domainCrits[key];
+    if (!c || (c.mandatory + c.potential + c.optional) === 0) continue;
+    var total = c.mandatory + c.potential + c.optional;
+    var div = document.createElement('div');
+    div.className = 'domain-summary-item';
+    div.innerHTML = buildDonutSvg(c.mandatory, c.potential, c.optional) +
+      '<h3>' + domainNames[key] + '</h3>' +
+      '<div class="count">' + total + ' issue' + (total !== 1 ? 's' : '') + '</div>';
+    container.appendChild(div);
+  }
+}
+
+function buildDonutSvg(m, p, o) {
+  var total = m + p + o;
+  if (total === 0) return '<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;"><circle cx="50" cy="50" r="35" fill="none" stroke="#d0d7de" stroke-width="15" opacity="0.5"/></svg>';
+  var r = 35, circ = 2 * Math.PI * r, offset = 0;
+  var svg = '<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">';
+  var segs = [{c:m,color:'var(--color-mandatory)'},{c:p,color:'var(--color-potential)'},{c:o,color:'var(--color-optional)'}];
+  for (var i = 0; i < segs.length; i++) {
+    if (segs[i].c === 0) continue;
+    var segLen = (segs[i].c / total) * circ;
+    var gap = total > segs[i].c ? 1.5 : 0;
+    var drawLen = Math.max(segLen - gap, 0.5);
+    svg += '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="' + segs[i].color + '" stroke-width="15" stroke-dasharray="' + drawLen.toFixed(2) + ' ' + circ.toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) + '"/>';
+    offset += segLen;
+  }
+  svg += '</svg>';
+  return svg;
+}
+</script>
+<script>document.addEventListener('DOMContentLoaded', function() { onTargetChange('azure-aks'); });</script>
+</div></body></html>
